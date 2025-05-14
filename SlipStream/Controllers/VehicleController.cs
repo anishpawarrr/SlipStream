@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SlipStream.Data;
@@ -12,12 +13,14 @@ namespace SlipStream.Controllers
     {
         private readonly IJWTService _jwtService;
         private readonly IVehicle _vehicleService;
-        private readonly AppDbContext _dbContext;
-        public VehicleController( [FromServices] IJWTService jwtService, [FromServices] IVehicle vehicleService, [FromServices] AppDbContext dbContext)
+        private const string _authString = "Authorization", _bearerString = "Bearer ";
+        private const int _bearerStringLength = 7;
+        // private readonly AppDbContext _dbContext;
+        public VehicleController( [FromServices] IJWTService jwtService, [FromServices] IVehicle vehicleService )
         {
             _jwtService = jwtService;
             _vehicleService = vehicleService;
-            _dbContext = dbContext;
+            // _dbContext = dbContext;
         }
 
         [HttpPost("Register", Name = "AddVehicle")]
@@ -43,8 +46,21 @@ namespace SlipStream.Controllers
         }
 
         [HttpPut("", Name = "UpdateVehicle")]
-        public async Task<IActionResult> UpdateVehicle([FromBody] UpdateVehicleDTO updateVehicleDTO)
+        public async Task<IActionResult> UpdateVehicle( [FromBody] UpdateVehicleDTO updateVehicleDTO, [FromHeader(Name = _authString)] string authorization )
         {
+            if (string.IsNullOrEmpty(authorization) || !authorization.StartsWith(_authString))
+            {
+                return Unauthorized("Authorization header is missing or invalid");
+            }
+
+            string jwtToken = authorization.Substring(_bearerStringLength);
+
+            bool isValidToken = _jwtService.ValidateToken(token: jwtToken, VehicleId: updateVehicleDTO.VehicleId);
+            if (!isValidToken)
+            {
+                return Unauthorized("Invalid token");
+            }
+
             var result = await _vehicleService.UpdateVehicleAsync(updateVehicleDTO);
             if (result.Status)
             {
@@ -54,8 +70,20 @@ namespace SlipStream.Controllers
         }
 
         [HttpDelete("", Name = "DeleteVehicle")]
-        public async Task<IActionResult> DeleteVehicle([FromBody] DeleteVehicleDTO deleteVehicleDTO)
+        public async Task<IActionResult> DeleteVehicle([FromBody] DeleteVehicleDTO deleteVehicleDTO, [FromHeader(Name = _authString)] string authorization )
         {
+
+            if (string.IsNullOrEmpty(authorization) || !authorization.StartsWith(_bearerString))
+            {
+                return Unauthorized("Authorization header is missing or invalid");
+            }
+            string jwtToken = authorization.Substring(_bearerStringLength);
+            bool isValidToken = _jwtService.ValidateToken(token: jwtToken, VehicleId: deleteVehicleDTO.Id);
+            if (!isValidToken)
+            {
+                return Unauthorized("Invalid token");
+            }
+
             var result = await _vehicleService.DeleteVehicleAsync(deleteVehicleDTO);
             if (result.Status)
             {

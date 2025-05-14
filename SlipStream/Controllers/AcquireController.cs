@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SlipStream.Data;
@@ -12,16 +13,31 @@ namespace SlipStream.Controllers
     {
         private readonly IProduce _producer;
         private readonly AppDbContext _dbContext;
-        public AcquireController( [FromServices] IProduce producer, [FromServices] AppDbContext dbContext)
+        private readonly IJWTService _jwtService;
+        private const string _authString = "Authorization", _bearerString = "Bearer ";
+        private const int _bearerStringLength = 7;
+        public AcquireController( [FromServices] IProduce producer, [FromServices] AppDbContext dbContext, [FromServices] IJWTService jwtService)
         {
+            _jwtService = jwtService;
             _dbContext = dbContext;
             _producer = producer;
         }
 
-        [HttpPost("{sessionId}", Name = "AcquireTelemetry")]
-        public async Task<IActionResult> AcquireTelemetry( [FromRoute] int sessionId, [FromBody] TelemetryDTO telemetryDTO)
+        [HttpPost("", Name = "AcquireTelemetry")]
+        public async Task<IActionResult> AcquireTelemetry([FromHeader(Name = _authString)] string authorization , [FromBody] TelemetryDTO telemetryDTO)
         {
-            var result = await _producer.ProduceAsync(sessionId, telemetryDTO, _dbContext);
+
+            if (string.IsNullOrEmpty(authorization) || !authorization.StartsWith(_bearerString))
+            {
+                return Unauthorized("Authorization header is missing or invalid");
+            }
+            string jwtToken = authorization.Substring(_bearerStringLength);
+            bool isValidToken = _jwtService.ValidateToken(token: jwtToken, VehicleId: telemetryDTO.VehicleId, sessionId: telemetryDTO.SessionId);
+            if (!isValidToken)
+            {
+                return Unauthorized("Invalid token");
+            }
+            var result = await _producer.ProduceAsync(telemetryDTO.SessionId, telemetryDTO, _dbContext);
             if (result.Status)
             {
                 return Ok(result.Message);
@@ -29,10 +45,21 @@ namespace SlipStream.Controllers
             return BadRequest(result.Message);
         }
 
-        [HttpPost("batch/{sessionId}", Name = "AcquireTelemetryBatch")]
-        public async Task<IActionResult> AcquireTelemetryBatch([FromRoute] int sessionId, [FromBody] TelemetryBatchDTO telemetryBatchDTO)
+        [HttpPost("batch", Name = "AcquireTelemetryBatch")]
+        public async Task<IActionResult> AcquireTelemetryBatch([FromHeader(Name = _authString)] string authorization , [FromBody] TelemetryBatchDTO telemetryBatchDTO )
         {
-            var result = await _producer.ProduceAsync(sessionId, telemetryBatchDTO, _dbContext);
+            if (string.IsNullOrEmpty(authorization) || !authorization.StartsWith(_bearerString))
+            {
+                return Unauthorized("Authorization header is missing or invalid");
+            }
+            string jwtToken = authorization.Substring(_bearerStringLength);
+            bool isValidToken = _jwtService.ValidateToken(token: jwtToken, VehicleId: telemetryBatchDTO.VehicleId, sessionId: telemetryBatchDTO.SessionId);
+            if (!isValidToken)
+            {
+                return Unauthorized("Invalid token");
+            }
+
+            var result = await _producer.ProduceAsync(telemetryBatchDTO.SessionId, telemetryBatchDTO, _dbContext);
             if (result.Status)
             {
                 return Ok(result.Message);

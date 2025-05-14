@@ -28,14 +28,25 @@ public class Consumer : IConsume
         _consumer.Close();
         _consumer.Dispose();
     }
-    public async Task<ReturnDTO> ConsumeFromDBAsync(int SessionId, AppDbContext dbContext){
+    public async Task<ReturnDTO> ConsumeFromDBAsync(int vehicleId, int SessionId, AppDbContext dbContext){
+
+        Entities.Session? session = await dbContext.Sessions.FirstOrDefaultAsync(s => s.Id == SessionId && s.VehicleId == vehicleId);
+        if (session == null)
+        {
+            return new ReturnDTO
+            {
+                Message = "Session not found",
+                StatusCode = 404
+            };
+        }
+
+
         try{
             var telemetryData = await dbContext.Telemetries
                 .Where(t => t.SessionId == SessionId)
                 .GroupBy(t => new { t.SessionId, t.TimeStamp })
-                .Select(g => new TelemetryDTO
+                .Select(g => new SendTelemetryDTO
                 {
-                    SessionId = g.Key.SessionId,
                     TimeStamp = g.Key.TimeStamp,
                     Values = g.Select(t => new ValueDTO
                     {
@@ -59,7 +70,7 @@ public class Consumer : IConsume
         }
     }
 
-    public async IAsyncEnumerable<TelemetryDTO> ConsumeFromKafkaAsync(int SessionId, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<SendTelemetryDTO> ConsumeFromKafkaAsync(int SessionId, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         _consumer.Unsubscribe();
         _consumer.Subscribe(SessionId.ToString());
@@ -81,7 +92,7 @@ public class Consumer : IConsume
                 // System.Console.WriteLine("Error consuming message");
                 // System.Console.WriteLine("Error consuming message");
                 // System.Console.WriteLine("Error consuming message");
-                yield break;
+                break;
             }
 
             if (telemetryDTO != null)
@@ -91,13 +102,16 @@ public class Consumer : IConsume
                 // System.Console.WriteLine(telemetryDTO);
                 // System.Console.WriteLine();
                 // System.Console.WriteLine();
-                yield return telemetryDTO;
+                yield return new SendTelemetryDTO
+                {
+                    TimeStamp = telemetryDTO.TimeStamp,
+                    Values = telemetryDTO.Values
+                };
                 telemetryDTO = null;
             }
             await Task.Delay(100, cancellationToken);
         }
-        yield return new TelemetryDTO{
-                    SessionId = SessionId,
+        yield return new SendTelemetryDTO{
                     TimeStamp = DateTime.UtcNow.Ticks,
                     Values = new List<ValueDTO>()
                 };

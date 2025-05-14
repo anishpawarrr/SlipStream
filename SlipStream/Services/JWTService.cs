@@ -44,7 +44,7 @@ public class JWTService : IJWTService
 
     }
 
-    public bool ValidateToken(string token, int VehicleId, int sessionId)
+    public bool ValidateToken(string token, int VehicleId, int sessionId = -1)
     {
         if (string.IsNullOrEmpty(token)) return false;
         try{
@@ -68,7 +68,7 @@ public class JWTService : IJWTService
                 !int.TryParse(sessionIdClaim.Value, out int parsedSessionId))
                 return false;
 
-            return VehicleId == parsedVehicleId && sessionId == parsedSessionId;
+            return VehicleId == parsedVehicleId && ( sessionId == parsedSessionId || sessionId == -1 );
 
         }catch{
             return false;

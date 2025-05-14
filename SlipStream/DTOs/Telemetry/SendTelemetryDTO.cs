@@ -1,9 +1,7 @@
 namespace SlipStream.DTOs.Telemetry;
 
-public record class TelemetryDTO
+public record class SendTelemetryDTO
 {
-    public required int VehicleId { get; set; }
-    public required int SessionId { get; set; }
     public long? TimeStamp { get; set; }
     public required List<ValueDTO> Values { get; set; }
 }

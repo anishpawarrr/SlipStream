@@ -173,6 +173,7 @@ public class Produce : IProduce
                 long timeStamp = batchValue.TimeStamp is not null ? batchValue.TimeStamp.Value : DateTime.UtcNow.Ticks;
                 telemetryDTO = new TelemetryDTO
                 {
+                    VehicleId = telemetryBatchDTO.VehicleId,
                     SessionId = SessionId,
                     TimeStamp = timeStamp,
                     Values = batchValue.BatchValues

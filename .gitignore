@@ -3,4 +3,6 @@ SlipStream/Properties/*
 SlipStream/Migrations/*
 SlipStream/bin/*
 SlipStream/obj/*
+SlipStream/SlipStream.db-shm
+SlipStream/SlipStream.db-wal
 .vscode
