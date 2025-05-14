@@ -92,7 +92,7 @@ public class Consumer : IConsume
                 // System.Console.WriteLine("Error consuming message");
                 // System.Console.WriteLine("Error consuming message");
                 // System.Console.WriteLine("Error consuming message");
-                break;
+                yield break;
             }
 
             if (telemetryDTO != null)
