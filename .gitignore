@@ -1,0 +1,6 @@
+SlipStream/Dependencies/*
+SlipStream/Properties/*
+SlipStream/Migrations/*
+SlipStream/bin/*
+SlipStream/obj/*
+.vscode
