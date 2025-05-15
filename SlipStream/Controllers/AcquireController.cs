@@ -67,5 +67,11 @@ namespace SlipStream.Controllers
             return BadRequest(result.Message);
         }
 
+        [HttpGet("topics", Name = "GetTopics")]
+        public IActionResult GetTopics()
+        {
+            return Ok(_producer.GetTopics());
+        }
+
     }
 }

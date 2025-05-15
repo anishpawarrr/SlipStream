@@ -10,8 +10,10 @@ public class Produce : IProduce
 {
     private readonly ProducerConfig _producerConfig;
     private readonly IProducer<string, string> _producer;
-    public Produce()
+    private readonly ITopicCleaner _topicCleaner;
+    public Produce(ITopicCleaner topicCleaner)
     {
+        _topicCleaner = topicCleaner;
         
         _producerConfig = new ProducerConfig
         {
@@ -95,6 +97,8 @@ public class Produce : IProduce
             
             if (!resultPublish.Result.Status) return resultPublish.Result;
             if (!resultInsert.Result.Status) return resultInsert.Result;
+            
+            _topicCleaner.TopicHeartbeat(SessionId.ToString());
 
             return new ReturnDTO { Status = true, Message = "Message produced and inserted successfully", StatusCode = 201 };
         }
@@ -202,4 +206,10 @@ public class Produce : IProduce
             };
         }
     }
+
+    public Dictionary<string, DateTime> GetTopics()
+    {
+        return _topicCleaner.GetTopics();
+    }
+
 }

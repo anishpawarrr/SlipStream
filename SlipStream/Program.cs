@@ -19,6 +19,8 @@ builder.Services.AddSingleton<IProduce, Produce>();
 builder.Services.AddScoped<IConsume, Consumer>();
 builder.Services.AddScoped<IVehicle, Vehicle>();
 builder.Services.AddScoped<SlipStream.Services.ISession, Session>();
+builder.Services.AddSingleton<ITopicCleaner, TopicCleaner>();
+builder.Services.AddHostedService<TopicCleaner>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(opt => {

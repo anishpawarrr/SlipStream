@@ -1,7 +1,7 @@
 # SlipStream
 
 ## Overview
-SlipStream is a Race Engine which is a sophisticated system designed for handling race telemetry data. It efficiently manages the collection, storage, and streaming of real-time information from racing vehicles.
+SlipStream is a Race Engine which is designed for handling race telemetry data. It efficiently manages the collection, storage, and streaming of real-time information from racing vehicles.
 
 ## Core Functionality
 - **Data Collection**: Captures high-frequency telemetry data from vehicles during races

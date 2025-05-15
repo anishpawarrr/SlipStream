@@ -15,4 +15,6 @@ public interface IProduce
 
     Task<ReturnDTO> PushOnQueueAsync(int SessionId, TelemetryDTO telemetryDTO);
     Task<ReturnDTO> PushOnQueueAsync(int SessionId, TelemetryBatchDTO telemetryBatchDTO);
+
+    Dictionary<string, DateTime> GetTopics();
 }
